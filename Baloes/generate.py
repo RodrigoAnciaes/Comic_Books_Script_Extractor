@@ -184,61 +184,6 @@ for image_path in tqdm(image_paths, desc='Processing Images'):
         # Save the combined mask image
         mask_output_path = mask_dir / f"{mask_prefix}{image_path.stem}{mask_suffix}.png"
         cv2.imwrite(str(mask_output_path), mask_img)
-
-
-
-    elif mode == "segmentation":
-        img_cv = cv2.imread(str(image_path))  # Load the image with OpenCV for segmentation and mask generation
-        height, width, _ = img_cv.shape
-
-        # Perform inference using YOLOSEG for segmentation masks
-        bboxes, classes, segmentations, scores = ys.detect(img_cv)
-
-        # Initialize a blank mask for all segmentations
-        mask_img = np.zeros(img_cv.shape[:2], dtype=np.uint8)
-
-        # Perform inference using the original YOLO model for initial annotation
-        img_pil = Image.open(image_path)  # Load the image with PIL for overlay generation
-        results = model.predict(img_pil)
-        if hasattr(results[0], 'render'): # Check if 'render' method is available
-            annotated_img = results[0].render()[0]  # Use 'render' if available
-        else:
-            annotated_img = results[0].plot()  # Use 'plot' as a fallback
-        annotated_img = np.array(annotated_img)  # Convert PIL image to NumPy array for CV2 processing
-
-        # Text file for saving segmentation data
-        txt_output_path = detection_dir / f"{detection_prefix}{image_path.stem}{detection_suffix}.txt"
-        with open(txt_output_path, 'w') as f:
-            for bbox, class_id, seg in zip(bboxes, classes, segmentations):
-                # Normalize the segmentation data
-                seg_normalized = seg / [width, height]
-                # Write normalized data to text file
-                seg_data = ' '.join([f'{x:.6f},{y:.6f}' for x, y in seg_normalized])
-                f.write(f'{class_id} {seg_data}\n')
-
-                # Draw segmentation mask on the combined mask image
-                cv2.fillPoly(mask_img, [np.array(seg, dtype=np.int32)], 255)
-
-                # Draw bounding box and segmentation mask on the annotated image
-                x, y, x2, y2 = bbox
-                cv2.rectangle(annotated_img, (x, y), (x2, y2), (0, 0, 255), 2)
-                cv2.polylines(annotated_img, [np.array(seg, dtype=np.int32)], isClosed=True, color=(0, 0, 255), thickness=2)
-
-        # Extract speech balloons to separated images
-        speech_balloons_dir = output_dir / 'speech_balloons'
-        speech_balloons_dir.mkdir(parents=True, exist_ok=True)
-        for bbox, class_id, seg in zip(bboxes, classes, segmentations):
-            x, y, x2, y2 = bbox
-            speech_balloon = img_cv[y:y2, x:x2]
-            cv2.imwrite(str(speech_balloons_dir / f"{image_path.stem}_{x}_{y}_{x2}_{y2}.png"), speech_balloon)
-
-        # Save the final annotated image with bounding boxes and segmentation masks
-        overlay_output_path = overlay_dir / f"teste{overlay_prefix}{image_path.stem}{overlay_suffix}{image_path.suffix}"
-        cv2.imwrite(str(overlay_output_path), annotated_img)
-
-        # Save the combined mask image
-        mask_output_path = mask_dir / f"{mask_prefix}{image_path.stem}{mask_suffix}.png"
-        cv2.imwrite(str(mask_output_path), mask_img)
         
 
 
