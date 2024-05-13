@@ -248,7 +248,9 @@ def generateUnity(image):
     img_pil.save(overlay_dir / f"{overlay_prefix}{image.stem}{overlay_suffix}{image.suffix}")
 
     # Write detections to a text file
-    text_file_path = output_dir / f"{detection_prefix}{image.stem}{detection_suffix}.txt"
+    detection_dir = output_dir / 'detections'
+    detection_dir.mkdir(parents=True, exist_ok=True)
+    text_file_path = detection_dir / f"{detection_prefix}{image.stem}{detection_suffix}.txt"
     with open(text_file_path, 'w') as file:
         for detection in detections:
             file.write(f"{detection}\n")
