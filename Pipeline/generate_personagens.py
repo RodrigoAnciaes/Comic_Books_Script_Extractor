@@ -1,0 +1,354 @@
+# Imports
+from ultralytics import YOLO
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFont
+from tqdm import tqdm
+import cv2
+import numpy as np
+
+# Directories
+input_dir = Path('./generate_input')
+input_dir.mkdir(parents=True, exist_ok=True)
+
+output_dir = Path('./generate_output_personagens')
+output_dir.mkdir(parents=True, exist_ok=True)
+
+overlay_dir = output_dir / 'overlays'
+overlay_dir.mkdir(parents=True, exist_ok=True)
+overlay_prefix = "" # Image prefix, can be empty
+overlay_suffix = "" # Image suffix, can be empty
+
+detection_dir = output_dir / 'detections'
+detection_dir.mkdir(parents=True, exist_ok=True)
+detection_prefix = ""  # Text prefix, can be empty
+detection_suffix = ""  # Text suffix, can be empty
+
+mask_dir = output_dir / 'masks'
+mask_dir.mkdir(parents=True, exist_ok=True)
+mask_prefix = ""  # Text prefix, can be empty
+mask_suffix = ""  # Text suffix, can be empty
+
+# Load your trained model
+model_path = 'training_output_personagens/watermark/weights/best.pt' # THe model returned from the training script
+model = YOLO(model_path)
+
+# Mode selection: detection or segmentation
+mode = "detection"
+
+# Split multiple detections or keep them together?
+# Todo
+
+# Classes to detect
+# Example: ['Speechpersonagens', 'General_speech', 'hit_sound', 'blast_sound', 'narration speech', 'thought_speech', 'roar']
+selected_classes = ['Apocalypse', 'Beast', 'Black Cat', 'BlackSpiderman', 'Boomerang', 'Boy', 'Brock', 'Captain America', 'Carnage', 'Chameleon', 'Cyclops', 'Doc ock', 'Dr Doom', 'Electro', 'Gambit', 'Ghost', 'Girl', 'Goblin', 'Havok', 'Hulk', 'Ironman', 'Jean', 'Jubilee', 'Juggernaut', 'Kingpin', 'Kraven', 'Lizard', 'Magneto', 'Man', 'Mary Jane', 'Morbius', 'MrNegative', 'Mutants', 'Mysterio', 'Norman Osborn', 'OldMan', 'PeterParker', 'ProfX', 'QuickSilver', 'Rhino', 'Robot', 'Rogue', 'Sabertooth', 'Sandman', 'ScarletWitch', 'Scorpion', 'Shocker', 'Silvermane', 'Sineater', 'Sinister', 'Spiderman', 'Storm', 'Thor', 'Toad', 'Venom', 'Villan', 'Vulture', 'Wolverine', 'Woman', 'aunt may', 'j jonah jameson', 'man', 'miles morales', 'mystique', 'vault guardsman', 'venom', 'woman']
+
+# Class override mapping, treats the left side of the mapping as if it was the class of the right side
+# Example: thought_speech annotations will be treated as Speechpersonagens annotations.
+class_overrides = {
+    
+}
+
+# Confidence threshold
+confidence_threshold = 0.15
+
+# Label settings
+label_boxes = True  # Draw class names or just boxes
+font_size = 30  # Font size for the class labels
+
+try:
+    font = ImageFont.truetype("arial.ttf", 30)  # Update font size as needed
+except IOError:
+    font = ImageFont.load_default()
+    print("Default font will be used, as custom font not found.")
+
+# Label colors by index
+predefined_colors_with_text = [
+    ((204, 0, 0),     'white'),  # Darker red, white text
+    ((0, 204, 0),     'black'),  # Darker green, black text
+    ((0, 0, 204),     'white'),  # Darker blue, white text
+    ((204, 204, 0),   'black'),  # Darker yellow, black text
+    ((204, 0, 204),   'white'),  # Darker magenta, white text
+    ((0, 204, 204),   'black'),  # Darker cyan, black text
+    ((153, 0, 0),     'white'),  # Darker maroon, white text
+    ((0, 153, 0),     'white'),  # Darker green, white text
+    ((0, 0, 153),     'white'),  # Darker navy, white text
+    ((153, 153, 0),   'black'),  # Darker olive, black text
+    ((153, 0, 153),   'white'),  # Darker purple, white text
+    ((0, 153, 153),   'black'),  # Darker teal, black text
+    ((102, 0, 0),     'white'),  # Darker brown, white text
+    ((0, 102, 0),     'white'),  # Darker green, white text
+    ((0, 0, 102),     'white'),  # Darker blue, white text
+    ((102, 102, 0),   'black'),  # Darker olive, black text
+    ((102, 0, 102),   'white'),  # Darker purple, white text
+    ((0, 102, 102),   'black'),  # Darker teal, black text
+    ((51, 0, 0),      'white'),  # Darker maroon, white text
+    ((0, 51, 0),      'white'),  # Darker green, white text
+    ((0, 0, 51),      'white'),  # Darker navy, white text
+    ((51, 51, 0),     'black'),  # Darker olive, black text
+    ((51, 0, 51),     'white'),  # Darker purple, white text
+    ((0, 51, 51),     'black'),  # Darker teal, black text
+    ((255, 0, 0),     'white'),  # Red, white text
+    ((0, 255, 0),     'black'),  # Green, black text
+    ((0, 0, 255),     'white'),  # Blue, white text
+    ((255, 255, 0),   'black'),  # Yellow, black text
+    ((255, 0, 255),   'white'),  # Magenta, white text
+    ((0, 255, 255),   'black'),  # Cyan, black text
+    ((192, 0, 0),     'white'),  # Maroon, white text
+    ((0, 192, 0),     'white'),  # Green, white text
+    ((0, 0, 192),     'white'),  # Navy, white text
+        ((204, 0, 0),     'white'),  # Darker red, white text
+    ((0, 204, 0),     'black'),  # Darker green, black text
+    ((0, 0, 204),     'white'),  # Darker blue, white text
+    ((204, 204, 0),   'black'),  # Darker yellow, black text
+    ((204, 0, 204),   'white'),  # Darker magenta, white text
+    ((0, 204, 204),   'black'),  # Darker cyan, black text
+    ((153, 0, 0),     'white'),  # Darker maroon, white text
+    ((0, 153, 0),     'white'),  # Darker green, white text
+    ((0, 0, 153),     'white'),  # Darker navy, white text
+    ((153, 153, 0),   'black'),  # Darker olive, black text
+    ((153, 0, 153),   'white'),  # Darker purple, white text
+    ((0, 153, 153),   'black'),  # Darker teal, black text
+    ((102, 0, 0),     'white'),  # Darker brown, white text
+    ((0, 102, 0),     'white'),  # Darker green, white text
+    ((0, 0, 102),     'white'),  # Darker blue, white text
+    ((102, 102, 0),   'black'),  # Darker olive, black text
+    ((102, 0, 102),   'white'),  # Darker purple, white text
+    ((0, 102, 102),   'black'),  # Darker teal, black text
+    ((51, 0, 0),      'white'),  # Darker maroon, white text
+    ((0, 51, 0),      'white'),  # Darker green, white text
+    ((0, 0, 51),      'white'),  # Darker navy, white text
+    ((51, 51, 0),     'black'),  # Darker olive, black text
+    ((51, 0, 51),     'white'),  # Darker purple, white text
+    ((0, 51, 51),     'black'),  # Darker teal, black text
+    ((255, 0, 0),     'white'),  # Red, white text
+    ((0, 255, 0),     'black'),  # Green, black text
+    ((0, 0, 255),     'white'),  # Blue, white text
+    ((255, 255, 0),   'black'),  # Yellow, black text
+    ((255, 0, 255),   'white'),  # Magenta, white text
+    ((0, 255, 255),   'black'),  # Cyan, black text
+    ((192, 0, 0),     'white'),  # Maroon, white text
+    ((0, 192, 0),     'white'),  # Green, white text
+    ((0, 0, 192),     'white'),  # Navy, white text
+        ((204, 0, 0),     'white'),  # Darker red, white text
+    ((0, 204, 0),     'black'),  # Darker green, black text
+    ((0, 0, 204),     'white'),  # Darker blue, white text
+    ((204, 204, 0),   'black'),  # Darker yellow, black text
+    ((204, 0, 204),   'white'),  # Darker magenta, white text
+    ((0, 204, 204),   'black'),  # Darker cyan, black text
+    ((153, 0, 0),     'white'),  # Darker maroon, white text
+    ((0, 153, 0),     'white'),  # Darker green, white text
+    ((0, 0, 153),     'white'),  # Darker navy, white text
+    ((153, 153, 0),   'black'),  # Darker olive, black text
+    ((153, 0, 153),   'white'),  # Darker purple, white text
+    ((0, 153, 153),   'black'),  # Darker teal, black text
+    ((102, 0, 0),     'white'),  # Darker brown, white text
+    ((0, 102, 0),     'white'),  # Darker green, white text
+    ((0, 0, 102),     'white'),  # Darker blue, white text
+    ((102, 102, 0),   'black'),  # Darker olive, black text
+    ((102, 0, 102),   'white'),  # Darker purple, white text
+    ((0, 102, 102),   'black'),  # Darker teal, black text
+    ((51, 0, 0),      'white'),  # Darker maroon, white text
+    ((0, 51, 0),      'white'),  # Darker green, white text
+    ((0, 0, 51),      'white'),  # Darker navy, white text
+    ((51, 51, 0),     'black'),  # Darker olive, black text
+    ((51, 0, 51),     'white'),  # Darker purple, white text
+    ((0, 51, 51),     'black'),  # Darker teal, black text
+    ((255, 0, 0),     'white'),  # Red, white text
+    ((0, 255, 0),     'black'),  # Green, black text
+    ((0, 0, 255),     'white'),  # Blue, white text
+    ((255, 255, 0),   'black'),  # Yellow, black text
+    ((255, 0, 255),   'white'),  # Magenta, white text
+    ((0, 255, 255),   'black'),  # Cyan, black text
+    ((192, 0, 0),     'white'),  # Maroon, white text
+    ((0, 192, 0),     'white'),  # Green, white text
+    ((0, 0, 192),     'white'),  # Navy, white text
+]
+
+# Assign colors to each class
+class_colors = {class_name: predefined_colors_with_text[i][0] for i, class_name in enumerate(selected_classes)}
+text_colors = {class_name: predefined_colors_with_text[i][1] for i, class_name in enumerate(selected_classes)}
+
+# Store input images in a variable
+image_paths = []
+for extension in ['*.jpg', '*.jpeg', '*.png']:
+    image_paths.extend(input_dir.glob(extension))
+
+# Segmentation class
+class YOLOSEG:
+    def __init__(self, model_path):
+        self.model = YOLO(model_path)
+
+    def detect(self, img):
+        height, width, _ = img.shape
+        results = self.model.predict(source=img.copy(), save=False, save_txt=False)
+        result = results[0]
+
+        segmentation_contours_idx = []
+        if len(result) > 0:
+            for seg in result.masks.xy:
+                segment = np.array(seg, dtype=np.float32)
+                segmentation_contours_idx.append(segment)
+
+        bboxes = np.array(result.boxes.xyxy.cpu(), dtype="int")
+        class_ids = np.array(result.boxes.cls.cpu(), dtype="int")
+        scores = np.array(result.boxes.conf.cpu(), dtype="float").round(2)
+        return bboxes, class_ids, segmentation_contours_idx, scores
+
+ys = YOLOSEG(model_path)
+
+# Function to estimate text size
+def estimate_text_size(label, font_size):
+    approx_char_width = font_size * 0.6
+    text_width = len(label) * approx_char_width
+    text_height = font_size
+    return text_width, text_height
+
+def write_detections_to_file(image_path, detections):
+    # Create a text file named after the image
+    text_file_path = detection_dir / f"{detection_prefix}{image_path.stem}{detection_suffix}.txt"
+
+    with open(text_file_path, 'w') as file:
+        for detection in detections:
+            file.write(f"{detection}\n")
+
+def generate_batch():
+    # Process images with progress bar
+    print(f"Generating outputs in {mode} mode.")
+    for image_path in tqdm(image_paths, desc='Processing Images'):
+        # Detection Mode
+        if mode == "detection":
+            img_cv = cv2.imread(str(image_path))  # Load the image with OpenCV for mask generation
+            mask_img = np.zeros(img_cv.shape[:2], dtype=np.uint8)  # Initialize a blank mask for all detections
+
+            img_pil = Image.open(image_path)  # Load the image with PIL for overlay generation
+            results = model.predict(img_pil)
+            draw = ImageDraw.Draw(img_pil)
+            detections = []
+
+            if len(results) > 0 and results[0].boxes.xyxy is not None:
+                for idx, box in enumerate(results[0].boxes.xyxy):
+                    x1, y1, x2, y2 = box[:4].tolist()
+                    cls_id = int(results[0].boxes.cls[idx].item())
+                    conf = results[0].boxes.conf[idx].item()
+                    cls_name = results[0].names[cls_id] if 0 <= cls_id < len(results[0].names) else "Unknown"
+                    cls_name = class_overrides.get(cls_name, cls_name)
+                    #print(f"Detected {cls_name} with confidence {conf:.2f}")
+                    if cls_name in selected_classes and conf >= confidence_threshold:
+
+                        # save each os the personagens to a separate image
+                        # crop the image
+                        ballon_img = img_pil.crop((x1, y1, x2, y2))
+                        ballon_path = output_dir / 'personagens' / f"{image_path.stem}_{cls_name}_{conf:.2f}.png"
+                        ballon_img.save(ballon_path)
+                        # Save the coordinates of the balloon
+                        with open(output_dir / 'personagens_coordinates' / f"{image_path.stem}_{cls_name}_{conf:.2f}.txt", 'w') as f:
+                            f.write(f"{x1} {y1} {x2} {y2}")
+
+                        box_color = class_colors.get(cls_name, (255, 0, 0))
+                        text_color = text_colors.get(cls_name, 'black')
+                        draw.rectangle([x1, y1, x2, y2], outline=box_color, width=7)
+
+                        # Fill mask image for this detection
+                        cv2.rectangle(mask_img, (int(x1), int(y1)), (int(x2), int(y2)), 255, thickness=-1)  # -1 thickness fills the rectangle
+
+                        if label_boxes:
+                            label = f"{cls_name}: {conf:.2f}"
+                            text_size = estimate_text_size(label, font_size)
+                            draw.rectangle([x1, y1 - text_size[1] - 5, x1 + text_size[0], y1], fill=box_color)
+                            draw.text((x1, y1 - text_size[1] - 5), label, fill=text_color, font=font)
+
+                        # Add detection data to the list
+                        detections.append(f"{cls_name} {conf:.2f} {x1} {y1} {x2} {y2}")
+
+
+                        
+
+            # Save overlay images
+            img_pil.save(overlay_dir / f"{overlay_prefix}{image_path.stem}{overlay_suffix}{image_path.suffix}")
+
+            # Write detections to a text file
+            write_detections_to_file(image_path, detections)
+
+            # Save the combined mask image
+            mask_output_path = mask_dir / f"{mask_prefix}{image_path.stem}{mask_suffix}.png"
+            cv2.imwrite(str(mask_output_path), mask_img)
+            
+
+
+    print(f"Processed {len(image_paths)} images. Overlays saved to '{overlay_dir}', Detections saved to '{detection_dir}', and Masks saved to '{mask_dir}',and Speech personagens saved to 'personagens' folder.")
+
+
+#generate_batch()
+
+
+def generateUnity(image):
+    output_dir = Path('./generate_output_personagens_unity')
+    output_dir.mkdir(parents=True, exist_ok=True)
+    img_pil = Image.open(image)  # Load the image with PIL for overlay generation
+    results = model.predict(img_pil)
+    draw = ImageDraw.Draw(img_pil)
+    detections = []
+
+    if len(results) > 0 and results[0].boxes.xyxy is not None:
+        for idx, box in enumerate(results[0].boxes.xyxy):
+            x1, y1, x2, y2 = box[:4].tolist()
+            cls_id = int(results[0].boxes.cls[idx].item())
+            conf = results[0].boxes.conf[idx].item()
+            cls_name = results[0].names[cls_id] if 0 <= cls_id < len(results[0].names) else "Unknown"
+            cls_name = class_overrides.get(cls_name, cls_name)
+            #print(f"Detected {cls_name} with confidence {conf:.2f}")
+            if cls_name in selected_classes and conf >= confidence_threshold:
+                # save each os the personagens to a separate image
+                # crop the image
+                ballon_img = img_pil.crop((x1, y1, x2, y2))
+                ballon_path = output_dir / 'personagens' / f"{image.stem}_{cls_name}_{conf:.2f}.png"
+                # create the directory if it does not exist
+                ballon_path.parent.mkdir(parents=True, exist_ok=True)
+                ballon_img.save(ballon_path)
+                # Save the coordinates of the balloon
+                coodinates_path = output_dir / 'personagens_coordinates' / f"{image.stem}_{cls_name}_{conf:.2f}.txt"
+                coodinates_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(coodinates_path, 'w') as f:
+                    f.write(f"{x1} {y1} {x2} {y2}")
+
+                box_color = class_colors.get(cls_name, (255, 0, 0))
+                text_color = text_colors.get(cls_name, 'black')
+                draw.rectangle([x1, y1, x2, y2], outline=box_color, width=7)
+
+                mask_img = np.zeros(img_pil.size, dtype=np.uint8)
+
+                # Fill mask image for this detection
+                cv2.rectangle(mask_img, (int(x1), int(y1)), (int(x2), int(y2)), 255, thickness=-1)  # -1 thickness fills the rectangle
+
+                if label_boxes:
+                    label = f"{cls_name}: {conf:.2f}"
+                    text_size = estimate_text_size(label, font_size)
+                    draw.rectangle([x1, y1 - text_size[1] - 5, x1 + text_size[0], y1], fill=box_color)
+                    draw.text((x1, y1 - text_size[1] - 5), label, fill=text_color, font=font)
+
+                # Add detection data to the list
+                detections.append(f"{cls_name} {conf:.2f} {x1} {y1} {x2} {y2}")
+
+    overlay_dir = output_dir / 'overlays'
+    overlay_dir.mkdir(parents=True, exist_ok=True)
+    # Save overlay images
+    img_pil.save(overlay_dir / f"{overlay_prefix}{image.stem}{overlay_suffix}{image.suffix}")
+
+    # Write detections to a text file
+    text_file_path = output_dir / f"{detection_prefix}{image.stem}{detection_suffix}.txt"
+    with open(text_file_path, 'w') as file:
+        for detection in detections:
+            file.write(f"{detection}\n")
+    
+    mask_dir = output_dir / 'masks'
+    mask_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save the combined mask image
+    mask_output_path = mask_dir / f"{mask_prefix}{image.stem}{mask_suffix}.png"
+    cv2.imwrite(str(mask_output_path), mask_img)
+    print(f"Processed {len(image_paths)} images. Overlays saved to '{overlay_dir}', Detections saved to '{detection_dir}', and Masks saved to '{mask_dir}',and Speech personagens saved to 'personagens' folder.")
+
+
+# Generate Unity images
+image = Path('./generate_input/0010_jpg.rf.cc43fbe68c0feb90d0db546f23325db6.jpg')
+generateUnity(image)
