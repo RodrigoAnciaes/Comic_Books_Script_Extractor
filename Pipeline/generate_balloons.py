@@ -264,7 +264,3 @@ def generateUnity(image):
     cv2.imwrite(str(mask_output_path), mask_img)
     print(f"Processed {len(image_paths)} images. Overlays saved to '{overlay_dir}', Detections saved to '{detection_dir}', and Masks saved to '{mask_dir}',and Speech balloons saved to 'speech_balloons' folder.")
 
-
-# Generate Unity images
-image = Path('./generate_input/0010_jpg.rf.cc43fbe68c0feb90d0db546f23325db6.jpg')
-generateUnity(image)
