@@ -297,6 +297,10 @@ def generateUnityPersonagens(image):
             conf = results[0].boxes.conf[idx].item()
             cls_name = results[0].names[cls_id] if 0 <= cls_id < len(results[0].names) else "Unknown"
             cls_name = class_overrides.get(cls_name, cls_name)
+            class_prob_path = output_dir / 'probabilities' / f"{image.stem}_{conf:.2f}.txt"
+            class_prob_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(class_prob_path, 'w') as f:
+                f.write(f"{cls_id} {conf:.2f}")
             #print(f"Detected {cls_name} with confidence {conf:.2f}")
             if cls_name in selected_classes and conf >= confidence_threshold:
                 # save each os the personagens to a separate image
@@ -349,5 +353,19 @@ def generateUnityPersonagens(image):
     # Save the combined mask image
     mask_output_path = mask_dir / f"{mask_prefix}{image.stem}{mask_suffix}.png"
     cv2.imwrite(str(mask_output_path), mask_img)
+
+
+    # Save the probabilities
+    class_prob_path = output_dir / 'class_probabilities' / f"{image.stem}_probabilities.txt"
+    class_prob_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(class_prob_path, 'w') as f:
+        for idx, box in enumerate(results[0].boxes.xyxy):
+            x1, y1, x2, y2 = box[:4].tolist()
+            cls_id = int(results[0].boxes.cls[idx].item())
+            conf = results[0].boxes.conf[idx].item()
+            cls_name = results[0].names[cls_id] if 0 <= cls_id < len(results[0].names) else "Unknown"
+            cls_name = class_overrides.get(cls_name, cls_name)
+            f.write(f"{cls_name} {conf:.2f}\n")
+
     print(f"Processed {len(image_paths)} images. Overlays saved to '{overlay_dir}', Detections saved to '{detection_dir}', and Masks saved to '{mask_dir}',and Speech personagens saved to 'personagens' folder.")
 
