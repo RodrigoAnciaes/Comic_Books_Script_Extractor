@@ -211,7 +211,7 @@ def write_detections_to_file(image_path, detections):
         for detection in detections:
             file.write(f"{detection}\n")
 
-def generate_batch():
+def generate_batch_personagens():
     # Process images with progress bar
     print(f"Generating outputs in {mode} mode.")
     for image_path in tqdm(image_paths, desc='Processing Images'):
@@ -281,7 +281,7 @@ def generate_batch():
 #generate_batch()
 
 
-def generateUnity(image):
+def generateUnityPersonagens(image):
     output_dir = Path('./generate_output_personagens_unity')
     output_dir.mkdir(parents=True, exist_ok=True)
     img_pil = Image.open(image)  # Load the image with PIL for overlay generation
