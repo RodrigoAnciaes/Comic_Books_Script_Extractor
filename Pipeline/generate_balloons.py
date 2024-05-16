@@ -198,6 +198,7 @@ def generateUnity(image):
     output_dir = Path('./generate_output_balloons_unity')
     output_dir.mkdir(parents=True, exist_ok=True)
     img_pil = Image.open(image)  # Load the image with PIL for overlay generation
+    original_img = img_pil.copy()
     results = model.predict(img_pil)
     draw = ImageDraw.Draw(img_pil)
     detections = []
@@ -213,7 +214,7 @@ def generateUnity(image):
             if cls_name in selected_classes and conf >= confidence_threshold:
                 # save each os the balloons to a separate image
                 # crop the image
-                ballon_img = img_pil.crop((x1, y1, x2, y2))
+                ballon_img = original_img.crop((x1, y1, x2, y2))
                 ballon_path = output_dir / 'speech_balloons' / f"{image.stem}_{cls_name}_{conf:.2f}.png"
                 # create the directory if it does not exist
                 ballon_path.parent.mkdir(parents=True, exist_ok=True)
