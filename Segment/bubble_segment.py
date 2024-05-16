@@ -3,18 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def line_coefficients(point1, point2):
-    # Convert points to numpy array of shape (N,1,2)
-        points = np.array([point1, point2], dtype=np.float32).reshape(-1, 1, 2)
-    
-    # Fit a line to the points
-        vx, vy, x, y = cv.fitLine(points, cv.DIST_L2, 0, 0.01, 0.01)
-    
-    # Calculate the slope (m) and y-intercept (b) of the line
-        m = vy / vx
-        b = y - m * x
-    
-        return m, b
 
 def angle_between_vectors(v1,v2):
     dot_product = np.dot(v1,v2) 
@@ -43,7 +31,6 @@ def bubble_seg_eq(img):
     approx = cv.approxPolyDP(contour, epsilon, True)
     cv.drawContours(img, [approx], -1, (0, 255, 0), 3)
     target_point = (approx[:,0,0].min() + approx[:,0,0].max()) // 2, approx[:,0,1].max()  # Adjust for your specific point of interest
-    closest_point = min(approx, key=lambda point: np.linalg.norm(point[0] - target_point))
 
     min_angle = float("inf")
     num_points = len(approx)
@@ -60,15 +47,12 @@ def bubble_seg_eq(img):
             min_angle = angle
             min_angle_point = p2
 
+    direction = min_angle_point - (cx,cy)
+    return direction
 
 
-
-    m,b = line_coefficients((cx, cy), (min_angle_point[0], min_angle_point[1])) # Line equation coefficients
-    return m,b
-
-
-image_path = "bubble_11.png"
-img=cv.imread(image_path)
-
-m,b = bubble_seg_eq(img)
-print(m,b)
+if __name__ == "__main__":
+    image_path = "bubble_11.png"
+    img=cv.imread(image_path)
+    direction = bubble_seg_eq(img)
+    print(direction)
