@@ -369,3 +369,16 @@ def generateUnityPersonagens(image):
 
     print(f"Processed {len(image_paths)} images. Overlays saved to '{overlay_dir}', Detections saved to '{detection_dir}', and Masks saved to '{mask_dir}',and Speech personagens saved to 'personagens' folder.")
 
+
+
+def generate_prob_unity_personagens(image):
+    img_pil = Image.open(image)  # Load the image with PIL for overlay generation
+    results = model.predict(img_pil)
+    # print the probabilities of each class
+    for idx, box in enumerate(results[0].boxes.xyxy):
+        x1, y1, x2, y2 = box[:4].tolist()
+        cls_id = int(results[0].boxes.cls[idx].item())
+        conf = results[0].boxes.conf[idx].item()
+        cls_name = results[0].names[cls_id] if 0 <= cls_id < len(results[0].names) else "Unknown"
+        cls_name = class_overrides.get(cls_name, cls_name)
+        print(f"{cls_name} {conf:.2f}")
