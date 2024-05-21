@@ -1,15 +1,13 @@
 # Comics Lib
 
-Biblioteca criada para o projeto final da disciplina de Visão Computacional
+Library created for the final project of the Computer Vision class of Insper
 
-### Integrantes
+### Members
 - Eric Possato
 - Pedro Bittar Barão
 - Rodrigo Patelli
 
-### Requisitos
-- TODO
-
-### Uso
-- Importe o arquivo comics_lib.py para ter acesso às funções 
-- TODO: EXPLICAR FUNÇÕES
+### Usage
+- Create a virtual environment and import the dependencies in the requirements.txt file
+- Import the comics_lib.py file to have access to the functions
+- Each function in the library is explained in its respective file and usage examples can be found in example.ipynb.
