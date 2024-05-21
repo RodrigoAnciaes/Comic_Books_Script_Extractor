@@ -11,7 +11,7 @@ def angle_between_vectors(v1,v2):
     angle = np.arccos(np.clip(cos_angle,-1,1))
     return np.degrees(angle)
 
-def bubble_seg_eq(img):
+def bubble_direction(img):
 
     img=cv.imread(img)
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
@@ -57,5 +57,5 @@ def bubble_seg_eq(img):
 
 if __name__ == "__main__":
     image_path = "bubble_11.png"
-    direction = bubble_seg_eq(image_path)
+    direction = bubble_direction(image_path)
     print(direction)

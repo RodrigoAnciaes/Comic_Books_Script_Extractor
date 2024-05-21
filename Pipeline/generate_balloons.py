@@ -194,8 +194,8 @@ def generate_batch_balloons():
 #generate_batch()
 
 
-def generateUnityBalloons(image):
-    output_dir = Path('./generate_output_balloons_unity')
+def generate_unit_balloons(image):
+    output_dir = Path('./generate_output_balloons_unit')
     output_dir.mkdir(parents=True, exist_ok=True)
     img_pil = Image.open(image)  # Load the image with PIL for overlay generation
     original_img = img_pil.copy()
@@ -284,11 +284,14 @@ def generateUnityBalloons(image):
 def generate_prob_unity_balloons(image):
     img_pil = Image.open(image)  # Load the image with PIL for overlay generation
     results = model.predict(img_pil)
-    # print the probabilities of each class
+    # print the probabilities of each class]
+    ret = []	
     for idx, box in enumerate(results[0].boxes.xyxy):
         x1, y1, x2, y2 = box[:4].tolist()
         cls_id = int(results[0].boxes.cls[idx].item())
         conf = results[0].boxes.conf[idx].item()
         cls_name = results[0].names[cls_id] if 0 <= cls_id < len(results[0].names) else "Unknown"
         cls_name = class_overrides.get(cls_name, cls_name)
-        print(f"{cls_name} {conf:.2f}")
+        ret.append((cls_name,conf))
+
+    return ret
