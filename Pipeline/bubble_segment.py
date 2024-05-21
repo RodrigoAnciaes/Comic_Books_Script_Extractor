@@ -12,6 +12,7 @@ def angle_between_vectors(v1,v2):
     return np.degrees(angle)
 
 def bubble_direction(img):
+    """Returns the direction of the bubble in the image"""
 
     img=cv.imread(img)
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)

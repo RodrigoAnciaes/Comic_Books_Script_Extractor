@@ -8,7 +8,9 @@ import pytesseract
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 
-def extract_text(image_path):
+def extract_text(image_path) -> str:
+    """Extracts text from the image at the given path using pytesseract"""
+
     image = cv.imread(image_path)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     thresholded = cv.threshold(gray, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)[1]

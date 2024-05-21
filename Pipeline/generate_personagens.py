@@ -282,6 +282,9 @@ def generate_batch_personagens():
 
 
 def generate_unit_personagens(image):
+    """Receives comic image and generates the character output for a single image.
+    Outputs created in generate_output_personagens_unit directory."""
+
     output_dir = Path('./generate_output_personagens_unit')
     output_dir.mkdir(parents=True, exist_ok=True)
     img_pil = Image.open(image)  # Load the image with PIL for overlay generation
@@ -372,6 +375,7 @@ def generate_unit_personagens(image):
 
 
 def generate_prob_unity_personagens(image):
+    """Receives comic image and returns a list with the probabilities of each character class detected in the image."""
     img_pil = Image.open(image)  # Load the image with PIL for overlay generation
     results = model.predict(img_pil)
     # print the probabilities of each class
