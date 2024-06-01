@@ -9,5 +9,10 @@ Library created for the final project of the Computer Vision class of Insper
 
 ### Usage
 - Create a virtual environment and import the dependencies in the requirements.txt file
+- Tesseract-ocr cannot be installed directly through pip, and should be downloaded from https://github.com/tesseract-ocr/tesseract#installing-tesseract
 - Import the comics_lib.py file to have access to the functions
 - Each function in the library is explained in its respective file and usage examples can be found in example.ipynb.
+
+### Details
+- The file example.ipynb contains usage of each function in the library
+- Each function also saves the results in the Pipeline/generate_output_{} folders respective to the operation performed
