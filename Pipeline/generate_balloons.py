@@ -148,6 +148,9 @@ def generate_batch_balloons():
                     #print(f"Detected {cls_name} with confidence {conf:.2f}")
                     if cls_name in selected_classes and conf >= confidence_threshold:
 
+                        if cls_name == 'narration speech':
+                            cls_name = 'narration_speech'
+
                         # save each os the balloons to a separate image
                         # crop the image
                         ballon_img = img_pil.crop((x1, y1, x2, y2))
@@ -215,6 +218,9 @@ def generate_unit_balloons(image):
             cls_name = class_overrides.get(cls_name, cls_name)
             #print(f"Detected {cls_name} with confidence {conf:.2f}")
             if cls_name in selected_classes and conf >= confidence_threshold:
+
+                if cls_name == 'narration speech':
+                    cls_name = 'narration_speech'
                 # save each os the balloons to a separate image
                 # crop the image
                 ballon_img = original_img.crop((x1, y1, x2, y2))
