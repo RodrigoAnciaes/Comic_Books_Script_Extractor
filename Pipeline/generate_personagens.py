@@ -292,6 +292,7 @@ def generate_unit_personagens(image):
     results = model.predict(img_pil)
     draw = ImageDraw.Draw(img_pil)
     detections = []
+    count_img = 0
 
     if len(results) > 0 and results[0].boxes.xyxy is not None:
         for idx, box in enumerate(results[0].boxes.xyxy):
@@ -309,7 +310,12 @@ def generate_unit_personagens(image):
                 # save each os the personagens to a separate image
                 # crop the image
                 ballon_img = original_img.crop((x1, y1, x2, y2))
-                ballon_path = output_dir / 'personagens' / f"{image.stem}_{cls_name}_{conf:.2f}.png"
+                image_name = f"{image.stem}_{cls_name}_{conf:.2f}.png"
+                # check if the personagem is already in the folder
+                if (output_dir / 'personagens' / image_name).exists():
+                    count_img += 1
+                    image_name = f"{image.stem}_{cls_name}_{conf:.2f}_{count_img}.png"
+                ballon_path = output_dir / 'personagens' / image_name
                 # create the directory if it does not exist
                 ballon_path.parent.mkdir(parents=True, exist_ok=True)
                 ballon_img.save(ballon_path)
