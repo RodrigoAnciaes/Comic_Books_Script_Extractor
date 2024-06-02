@@ -21,4 +21,7 @@ Library created for the final project of the Computer Vision class of Insper
 
 - The folders Pipeline/training_output_{}, contain the trained models used for detection of balloons and characters. These models were trained inside the BalloonsDetectionTraining and CharactersDetectionTraining folders, respectively.
 
+- dataset to train the balloon detector: https://universe.roboflow.com/yolomanga/speechballoon_comic/dataset/1
+- Dataset to train the character detector: https://universe.roboflow.com/yolomanga/marvel_chars/dataset/1
+
 - The folder Pipeline/generate_input already contains some images for testing the functions. The images and are used for educational purposes only.
