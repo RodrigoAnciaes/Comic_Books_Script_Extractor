@@ -137,6 +137,7 @@ def generate_batch_balloons():
             results = model.predict(img_pil)
             draw = ImageDraw.Draw(img_pil)
             detections = []
+            img_counter = 0
 
             if len(results) > 0 and results[0].boxes.xyxy is not None:
                 for idx, box in enumerate(results[0].boxes.xyxy):
@@ -154,10 +155,16 @@ def generate_batch_balloons():
                         # save each os the balloons to a separate image
                         # crop the image
                         ballon_img = img_pil.crop((x1, y1, x2, y2))
-                        ballon_path = output_dir / 'speech_balloons' / f"{image_path.stem}_{cls_name}_{conf:.2f}.png"
+                        img_name = f"{image_path.stem}_{cls_name}_{conf:.2f}.png"
+                        #check if the image already exists
+                        if (output_dir / 'speech_balloons' / img_name).exists():
+                            # change the name of the image
+                            img_counter += 1
+                            img_name = f"{image_path.stem}_{cls_name}_{conf:.2f}_{img_counter}.png"
+                        ballon_path = output_dir / 'speech_balloons' / img_name
                         ballon_img.save(ballon_path)
                         # Save the coordinates of the balloon
-                        with open(output_dir / 'speech_balloons_coordinates' / f"{image_path.stem}_{cls_name}_{conf:.2f}.txt", 'w') as f:
+                        with open(output_dir / 'speech_balloons_coordinates' / img_name.replace('.png', '.txt'), 'w') as f:
                             f.write(f"{x1} {y1} {x2} {y2}")
 
                         box_color = class_colors.get(cls_name, (255, 0, 0))
