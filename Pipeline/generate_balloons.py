@@ -236,7 +236,7 @@ def generate_unit_balloons(image):
                 ballon_path.parent.mkdir(parents=True, exist_ok=True)
                 ballon_img.save(ballon_path)
                 # Save the coordinates of the balloon
-                coodinates_path = output_dir / 'speech_balloons_coordinates' / f"{image.stem}_{cls_name}_{conf:.2f}.txt"
+                coodinates_path = output_dir / 'speech_balloons_coordinates' / image_name.replace('.png', '.txt')
                 coodinates_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(coodinates_path, 'w') as f:
                     f.write(f"{x1} {y1} {x2} {y2}")
